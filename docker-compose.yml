@@ -11,4 +11,4 @@ services:
     ports:
       - 9000:5000
     environment:
-      PORT: 9000
+      PORT: 5000
