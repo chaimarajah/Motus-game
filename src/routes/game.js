@@ -1,22 +1,76 @@
-const { response } = require('express');
+
 const express = require('express');
+
+const WordModel = require('../models/word');
+const GameModel = require('../models/game');
 
 const Router = express.Router();
 
+/*const words = ['moto', 'lion', 'pen'];
+let search = null;*/
 
-const words = ['moto', 'lion', 'pen'];
+Router.post('/', async (request, response) => {
+    const word = await WordModel.aggregate([{
+        $sample: {size: 1}
+    }]);
 
-let search = null;
+    const game = new GameModel({
+        word: word[0]._id,
+        tries: []
+    });
 
-Router.post('/create', (request, response) => {
+    try {
+        await game.save();
+
+        return response.status(200).json({
+            "msg": game
+        });
+    } catch (error) {
+        return response.status(500).json({
+            "error": error.message
+        });
+    }
+});
+/*Router.post('/create', (request, response) => {
     //return response.status(200).send('<h1>It works From Game / !</h1>');
     //search = words[1];
-    words[Math.floor(Math.random()*words.length)];
+    search = words[Math.floor(Math.random()*words.length)];
     return response.status(200).json({
         //"word" : search
         "msg": 'New word is set : ' + search 
     })
-});
+});*/
+Router.get('/:id', async (request, response) => {
+    const {id} = request.params;
+
+    try {
+        const game = await GameModel.findOne({_id: id});
+
+        return response.status(200).json({
+            "msg": game
+        });
+    } catch (error) {
+        return response.status(500).json({
+            "error": error.message
+        });
+    }
+})
+Router.get('/:id', async (request, response) => {
+    const {id} = request.params;
+
+    try {
+        const game = await GameModel.findOne({_id: id});
+
+        return response.status(200).json({
+            "msg": game
+        });
+    } catch (error) {
+        return response.status(500).json({
+            "error": error.message
+        });
+    }
+})
+
 
 Router.post('/verif', (request,reponse) => {
     if (typeof request.body.word === 'undefined') {
@@ -25,7 +79,7 @@ Router.post('/verif', (request,reponse) => {
         });
     }
     if (request.body.word === search){
-        return reponse.status(200).json({
+        return response.status(200).json({
             "Result" : "You  find the word !"
         });
     }

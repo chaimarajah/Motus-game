@@ -6,10 +6,21 @@ const morgan = require('morgan');
 const mongoose = require ('mongoose');
 const session = require('express-session');
 
+
+
+const GameRoutes = require('./routes/game');
+const WordRoutes = require('./routes/word');
+const AuthRoutes = require('./routes/auth');
+
+
 //mongoose.connect('mongodb://127.0.0.1:27017/myapp');
-mongoose.connect(process.env.MONGODB)
-
-
+//mongoose.connect(process.env.MONGODB)
+try {
+    mongoose.connect(process.env.MONGODB);
+    console.log("Connected to the db");
+} catch(error) {
+    console.error('Can\'t connect to the db');
+}
 
 const App = express();
 App.use(helmet());
@@ -17,9 +28,6 @@ App.use(morgan('common'));
 App.use(express.json());
 
 
-
-const GameRoutes = require('./routes/game');
-const WordRoutes = require('./routes/word');
 
 
 App.get('/', (request, response) => {
@@ -32,6 +40,8 @@ App.post('/', (request, response) => {
 
 App.use('/game', GameRoutes);
 App.use('/word', WordRoutes);
+App.use('/auth', AuthRoutes);
+
 
 App.listen(process.env.PORT, () => {
     console.log(`Server running on http://localhost:${process.env.PORT}`);
