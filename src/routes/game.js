@@ -10,9 +10,11 @@ let search = null;
 
 Router.post('/create', (request, response) => {
     //return response.status(200).send('<h1>It works From Game / !</h1>');
-    search = words[1];
+    //search = words[1];
+    words[Math.floor(Math.random()*words.length)];
     return response.status(200).json({
-        "word" : search
+        //"word" : search
+        "msg": 'New word is set : ' + search 
     })
 });
 
