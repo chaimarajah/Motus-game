@@ -1,21 +1,16 @@
 const express = require('express');
- const Router = express.Router();
-
+const Router = express.Router();
 
 const WordModel = require('../models/word');
- Router.post('/', async (request, response) => {
-     const { word } = request.body;
 
-     const WordModel = new WordModel({
-        name : word
+Router.post('/', async (request, response) => {
+    const { word } = request.body;
+
+    const wordModel = new WordModel({ 
+        name: word
     });
-     //await WordModel.save();
-     //return response.status(200).json({
-        // "msg": "It works from word / post" 
-        //"msg": word
-     //})
 
-     try {
+    try {
 
         await wordModel.save();
 
@@ -28,6 +23,6 @@ const WordModel = require('../models/word');
             "error": error.message
         });
     }
- });
+});
 
- module.exports = Router;
+module.exports = Router;

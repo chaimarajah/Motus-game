@@ -1,37 +1,48 @@
 const express = require('express');
  const bcrypt = require('bcrypt');
-
  const Router = express.Router();
  const saltRounds = 10;
 
  const UserModel = require('../models/user');
+ const user = require('../models/user');
 
- Router.post('/register', async (request, response) => {
-     const {email, email_cfg, password, password_cfg, username, active} = request.body;
+ Router.post('/login', async (request, response) => {
+    const {email, password} = request.body;
 
-     const hash = await bcrypt.hash(password, saltRounds);
+    try {
 
-     const user = new UserModel({
-         email,
-         password: hash,
-         username,
-         active
-     });
+        let user = await UserModel.findOne({
+            email,
+            active: true
+        });
 
-     try {
+        if (user) {
+            let verif = await bcrypt.compare(password, user.password);
 
-         //await user.save();
+            if (verif) {
+                request.session.user = user;
 
-         return response.status(200).json({
-             "user": user
-         });
+                return response.status(200).json({
+                    "user": user
+                });
+            }
+        }
 
-     } catch (error) {
-         return response.status(500).json({
-             "error": error.message
-         });
-     }
+        return response.status(500).json({
+            "error": "User not authenticated !"
+        });
+    } catch (error) {
+        return response.status(500).json({
+            "error": error.message
+        });
+    }
 
- });
+});
 
- module.exports = Router;
+Router.get('/me', (request, response) => {
+    return response.status(200).json({
+        "user": request.session.user
+    });
+})
+
+module.exports = Router;
