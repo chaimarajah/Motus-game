@@ -1,106 +1,117 @@
-
 const express = require('express');
-
 const WordModel = require('../models/word');
 const GameModel = require('../models/game');
 
 const Router = express.Router();
 
-
-
 const isLogged = (request, response, next) => {
-    if (request.session.user) {
-        console.log('test');
-        next();
-    } else {
-        return response.status(500).json({'msg': "not logged !"})
-    }
-}
-
-/*const words = ['moto', 'lion', 'pen'];
-let search = null;*/
+  if (request.session.user) {
+    console.log('test');
+    next();
+  } else {
+    return response.status(500).json({ 'msg': "not logged !" });
+  }
+};
 
 Router.post('/', async (request, response) => {
-    const word = await WordModel.aggregate([{
-        $sample: {size: 1}
-    }]);
+  const word = await WordModel.aggregate([{ $sample: { size: 1 } }]);
 
-    //const game = new GameModel({
-     let game = new GameModel({
-        word: word[0]._id,
-        tries: [],
-        user: request.session.user._id
-    });
+  let game = new GameModel({
+    word: word[0]._id,
+    tries: [],
+    user: request.session.user._id
+  });
 
-    try {
-        await game.save();
+  try {
+    await game.save();
 
-        game = await GameModel.find({
-            _id: game._id
-        }).populate('user').populate('word')
+    game = await GameModel.findById(game._id)
+      .populate('user')
+      .populate('word');
 
-
-        return response.status(200).json({
-            "msg": game
-        });
-    } catch (error) {
-        return response.status(500).json({
-            "error": error.message
-        });
-    }
-});
-/*Router.post('/create', (request, response) => {
-    //return response.status(200).send('<h1>It works From Game / !</h1>');
-    //search = words[1];
-    search = words[Math.floor(Math.random()*words.length)];
     return response.status(200).json({
-        //"word" : search
-        "msg": 'New word is set : ' + search 
-    })
-});*/
-Router.get('/:id', async (request, response) => {
-    const {id} = request.params;
-
-    try {
-        const game = await GameModel.findOne({_id: id});
-
-        return response.status(200).json({
-            "msg": game
-        });
-    } catch (error) {
-        return response.status(500).json({
-            "error": error.message
-        });
-    }
-})
-
-
-
-
-Router.post('/verif', isLogged, (request, response) => {
-        // get the value from the user
-    
-        // ge the value searched by getting the game
-    
-        // make the verification
-    
-        // send the result
-    if (typeof request.body.word === 'undefined') {
-        return response.status(200).json ({
-        "msg": "You have to send the 'word' value !"
-        });
-    }
-    if (request.body.word === search){
-        return response.status(200).json({
-            "Result" : "You  find the word !"
-        });
-    }
-    return reponse.status(500).json({
-        "Result" : "You  didn't find the word !"
+      "msg": game
     });
-   
-})
+  } catch (error) {
+    return response.status(500).json({
+      "error": error.message
+    });
+  }
+});
+
+Router.get('/:id', async (request, response) => {
+  const { id } = request.params;
+
+  try {
+    const game = await GameModel.findOne({ _id: id });
+
+    return response.status(200).json({
+      "msg": game
+    });
+  } catch (error) {
+    return response.status(500).json({
+      "error": error.message
+    });
+  }
+});
+
+Router.post('/verif', isLogged, async (request, response) => {
+  const userGuess = request.body.word;
+
+  if (typeof userGuess === 'undefined') {
+    return response.status(500).json({
+      "msg": "You have to send a 'word' value"
+    });
+  }
+
+  const gameId = request.session.gameId;
+  const game = await GameModel.findById(gameId);
+
+  if (!game) {
+    return response.status(404).json({
+      "msg": "Game not found"
+    });
+  }
+
+  const word = await WordModel.findById(game.word);
+
+  if (!word) {
+    return response.status(404).json({
+      "msg": "Word not found"
+    });
+  }
+
+  const search = word.name;
+  const result = makeVerification(userGuess, search);
+
+  // Save the try and result in the game
+  game.tries.push({
+    word: userGuess,
+    response: result
+  });
+  await game.save();
+
+  return response.status(200).json({
+    "word": userGuess,
+    "response": result,
+    "game": game
+  });
+});
+
+function makeVerification(guess, search) {
+  let result = "";
+
+  for (let i = 0; i < guess.length; i++) {
+    if (guess[i] === search[i]) {
+      result += "1";
+    } else if (search.includes(guess[i])) {
+      result += "0";
+    } else {
+      result += "x";
+    }
+  }
+
+  return result;
+}
 
 module.exports = Router;
-
-

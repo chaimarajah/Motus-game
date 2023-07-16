@@ -1,10 +1,10 @@
 console.log('Hello Wolrd !');
 
-const express = require('express');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const mongoose = require ('mongoose');
-const session = require('express-session');
+const express = require('express'); //to manage the routes
+const helmet = require('helmet'); //for security reasons
+const morgan = require('morgan'); //to get a line when sending a request
+const mongoose = require ('mongoose'); //to make the connection and manage db
+const session = require('express-session'); 
 
 
 
@@ -20,12 +20,21 @@ try {
     console.log("Connected to the db");
 } catch(error) {
     console.error('Can\'t connect to the db');
-}
+} //try catch to know if we have a connection or not
 
 const App = express();
 App.use(helmet());
 App.use(morgan('common'));
 App.use(express.json());
+App.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+        secure: false,
+        httpOnly: true
+    }
+}));
 
 
 
